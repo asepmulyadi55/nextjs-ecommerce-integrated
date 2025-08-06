@@ -1,8 +1,100 @@
+"use client"
+
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from 'react';
+
+// Define the API URL for your Strapi backend.
+// This uses Next.js environment variables, falling back to localhost for development.
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
 
 const Signin = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState(null);
+
+  const fetchUserProfile = async (jwt) => {
+    try {
+      const response = await fetch(`${STRAPI_API_URL}/api/users/me`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setLoggedInUser(data);
+        console.log('User profile fetched successfully:', data);
+        setMessage(`Welcome, ${data.firstName || data.username || data.email}! Login successful.`);
+        setIsSuccess(true);
+      } else {
+        setMessage('Failed to fetch user profile after login.');
+        setIsSuccess(false);
+        console.error('Failed to fetch user profile:', data.error?.message || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('Network error fetching user profile:', error);
+      setMessage('Network error while fetching user profile.');
+      setIsSuccess(false);
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setMessage('');
+    setIsSuccess(false);
+    setLoggedInUser(null);
+
+    // Client-side validation for empty fields
+    if (!email || !password) {
+      setMessage('Please enter both your email and password.');
+      setIsSuccess(false);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${STRAPI_API_URL}/api/auth/local`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          identifier: email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEmail('');
+        setPassword('');
+
+        localStorage.setItem('jwt', data.jwt);
+
+        await fetchUserProfile(data.jwt);
+
+      } else {
+        setMessage(data.error?.message || 'Login failed. Please check your credentials.');
+        setIsSuccess(false);
+      }
+    } catch (error) {
+      console.error('Network error during login:', error);
+      setMessage('Network error. Please check your connection and try again.');
+      setIsSuccess(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   return (
     <>
       <Breadcrumb title={"Signin"} pages={["Signin"]} />
@@ -17,7 +109,7 @@ const Signin = () => {
             </div>
 
             <div>
-              <form>
+              <form onSubmit={handleSubmit}>
                 <div className="mb-5">
                   <label htmlFor="email" className="block mb-2.5">
                     Email
@@ -28,6 +120,9 @@ const Signin = () => {
                     name="email"
                     id="email"
                     placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                     className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
                   />
                 </div>
@@ -43,15 +138,19 @@ const Signin = () => {
                     id="password"
                     placeholder="Enter your password"
                     autoComplete="on"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                     className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
                   />
                 </div>
 
                 <button
                   type="submit"
+                  disabled={loading}
                   className="w-full flex justify-center font-medium text-white bg-dark py-3 px-6 rounded-lg ease-out duration-200 hover:bg-blue mt-7.5"
                 >
-                  Sign in to account
+                  {loading ? 'Signing In...' : 'Signin to account'}
                 </button>
 
                 <a
@@ -141,6 +240,22 @@ const Signin = () => {
                   </Link>
                 </p>
               </form>
+
+              {message && (
+                <p className={`mt-4 text-center text-sm ${isSuccess ? 'text-green-600' : 'text-red-600'}`}>
+                  {message}
+                </p>
+              )}
+              {loggedInUser && (
+                <div className="mt-6 p-4 bg-indigo-50 rounded-md text-sm text-indigo-800">
+                  <h3 className="font-semibold mb-2">Logged-in User Details:</h3>
+                  <p><strong>Username:</strong> {loggedInUser.username}</p>
+                  <p><strong>Email:</strong> {loggedInUser.email}</p>
+                  {loggedInUser.firstName && <p><strong>First Name:</strong> {loggedInUser.firstName}</p>}
+                  {loggedInUser.lastName && <p><strong>Last Name:</strong> {loggedInUser.lastName}</p>}
+                  {/* You can display more user data here as needed */}
+                </div>
+              )}
             </div>
           </div>
         </div>

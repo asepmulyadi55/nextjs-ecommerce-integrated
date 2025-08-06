@@ -1,8 +1,81 @@
+"use client"
+
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from 'react';
+
+// Define the API URL for your Strapi backend.
+// This uses Next.js environment variables, falling back to localhost for development.
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
 
 const Signup = () => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [retypePassword, setRetypePassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setMessage('');
+    setIsSuccess(false);
+
+    // Add validation for re-type password
+    if (password !== retypePassword) {
+      setMessage('Passwords do not match. Please re-type your password.');
+      setIsSuccess(false);
+      setLoading(false);
+      return; // Stop the submission if passwords don't match
+    }
+
+    try {
+      const response = await fetch(`${STRAPI_API_URL}/api/auth/local/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          firstName,
+          lastName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Registration successful
+        setMessage('Registration successful! You can now log in.');
+        setIsSuccess(true);
+        setUsername('');
+        setEmail('');
+        setPassword('');
+        setRetypePassword('');
+        setFirstName('');
+        setLastName('');
+        // You might want to redirect the user to a login page or dashboard here
+        // For example: router.push('/login');
+      } else {
+        // Handle registration errors from Strapi
+        setMessage(data.error?.message || 'Registration failed. Please try again.');
+        setIsSuccess(false);
+      }
+    } catch (error) {
+      console.error('Network error during registration:', error);
+      setMessage('Network error. Please check your connection and try again.');
+      setIsSuccess(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Breadcrumb title={"Signup"} pages={["Signup"]} />
@@ -87,17 +160,54 @@ const Signup = () => {
             </span>
 
             <div className="mt-5.5">
-              <form>
+              <form onSubmit={handleSubmit}>
                 <div className="mb-5">
-                  <label htmlFor="name" className="block mb-2.5">
-                    Full Name <span className="text-red">*</span>
+                  <label htmlFor="firstName" className="block mb-2.5">
+                    First Name <span className="text-red">*</span>
                   </label>
 
                   <input
                     type="text"
-                    name="name"
-                    id="name"
-                    placeholder="Enter your full name"
+                    name="firstName"
+                    id="firstName"
+                    placeholder="Enter your first name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                  />
+                </div>
+
+                <div className="mb-5">
+                  <label htmlFor="lastName" className="block mb-2.5">
+                    Last Name <span className="text-red">*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    name="lastName"
+                    id="lastName"
+                    placeholder="Enter your last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                  />
+                </div>
+
+                <div className="mb-5">
+                  <label htmlFor="username" className="block mb-2.5">
+                    Username <span className="text-red">*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    name="username"
+                    id="username"
+                    placeholder="Enter your last name"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
                     className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
                   />
                 </div>
@@ -112,6 +222,9 @@ const Signup = () => {
                     name="email"
                     id="email"
                     placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                     className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
                   />
                 </div>
@@ -127,30 +240,37 @@ const Signup = () => {
                     id="password"
                     placeholder="Enter your password"
                     autoComplete="on"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                     className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
                   />
                 </div>
 
                 <div className="mb-5.5">
-                  <label htmlFor="re-type-password" className="block mb-2.5">
+                  <label htmlFor="retypePassword" className="block mb-2.5">
                     Re-type Password <span className="text-red">*</span>
                   </label>
 
                   <input
                     type="password"
-                    name="re-type-password"
-                    id="re-type-password"
+                    name="retypePassword"
+                    id="retypePassword"
                     placeholder="Re-type your password"
                     autoComplete="on"
+                    value={retypePassword}
+                    onChange={(e) => setRetypePassword(e.target.value)}
+                    required
                     className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
                   />
                 </div>
 
                 <button
                   type="submit"
+                  disabled={loading}
                   className="w-full flex justify-center font-medium text-white bg-dark py-3 px-6 rounded-lg ease-out duration-200 hover:bg-blue mt-7.5"
                 >
-                  Create Account
+                  {loading ? 'Registering...' : 'Register'}
                 </button>
 
                 <p className="text-center mt-6">
@@ -163,6 +283,11 @@ const Signup = () => {
                   </Link>
                 </p>
               </form>
+              {message && (
+                <p className={`mt-4 text-center text-sm ${isSuccess ? 'text-green-600' : 'text-red-600'}`}>
+                  {message}
+                </p>
+              )}
             </div>
           </div>
         </div>
