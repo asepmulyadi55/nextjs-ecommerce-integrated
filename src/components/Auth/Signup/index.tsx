@@ -13,8 +13,6 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [retypePassword, setRetypePassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [message, setMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -43,8 +41,6 @@ const Signup = () => {
           username,
           email,
           password,
-          firstName,
-          lastName,
         }),
       });
 
@@ -58,8 +54,6 @@ const Signup = () => {
         setEmail('');
         setPassword('');
         setRetypePassword('');
-        setFirstName('');
-        setLastName('');
         // You might want to redirect the user to a login page or dashboard here
         // For example: router.push('/login');
       } else {
@@ -161,40 +155,6 @@ const Signup = () => {
 
             <div className="mt-5.5">
               <form onSubmit={handleSubmit}>
-                <div className="mb-5">
-                  <label htmlFor="firstName" className="block mb-2.5">
-                    First Name <span className="text-red">*</span>
-                  </label>
-
-                  <input
-                    type="text"
-                    name="firstName"
-                    id="firstName"
-                    placeholder="Enter your first name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                    className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-                  />
-                </div>
-
-                <div className="mb-5">
-                  <label htmlFor="lastName" className="block mb-2.5">
-                    Last Name <span className="text-red">*</span>
-                  </label>
-
-                  <input
-                    type="text"
-                    name="lastName"
-                    id="lastName"
-                    placeholder="Enter your last name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                    className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-                  />
-                </div>
-
                 <div className="mb-5">
                   <label htmlFor="username" className="block mb-2.5">
                     Username <span className="text-red">*</span>
